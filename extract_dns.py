@@ -9,8 +9,8 @@ from selenium.common.exceptions import WebDriverException
 path = "C:/Users/user/Desktop/Projects"
 
 # Regular expressions to match the desired lines
+line_regex = r"Nom de l'entreprise sur le site web\s*:\s*(.+)"
 domain_regex = r"Nom de domaine souhaité\s*:\s*(.+)"
-company_regex = r"Nom de l'entreprise sur le site web\s*:\s*(.+)"
 
 # List to store the extracted domain names and company names
 results = []
@@ -43,15 +43,14 @@ for project_folder in os.listdir(path):
     if not os.path.isdir(project_folder_path):
         continue
 
+    # Get the project name (without the "txt" extension)
+    project_name = project_folder + ".txt"
+
     # Search for the text file within the project folder
-    text_file_path = None
-    for file in os.listdir(project_folder_path):
-        if file.endswith(".txt"):
-            text_file_path = os.path.join(project_folder_path, file)
-            break
+    text_file_path = os.path.join(project_folder_path, project_name)
 
     # Continue to the next project folder if no text file is found
-    if text_file_path is None:
+    if not os.path.exists(text_file_path):
         print(f"No text file found for project: {project_folder}")
         continue
 
@@ -71,14 +70,14 @@ for project_folder in os.listdir(path):
 
     # Find the desired lines using the regex
     domain_match = re.search(domain_regex, text)
-    company_match = re.search(company_regex, text)
+    company_match = re.search(line_regex, text)
 
     if domain_match and company_match:
         domain_name = domain_match.group(1)
         company_name = company_match.group(1)
 
-        if domain_name != "Nom de domaine en ligne :":
-            result = f"{domain_name} - {company_name}"
+        if domain_name.strip() != "":
+            result = f"{company_name} - {domain_name}"
             results.append(result)
 
             # Open the website and capture a screenshot
@@ -86,7 +85,7 @@ for project_folder in os.listdir(path):
 
             try:
                 driver.get(url)
-                time.sleep(3)  # Wait for the page to load (adjust this if needed)
+                time.sleep(5)  # Wait for the page to load (adjust this if needed)
 
                 # Check if the website is accessible
                 if "This site can't be reached" in driver.title:
@@ -94,7 +93,8 @@ for project_folder in os.listdir(path):
                     continue
 
                 # Capture a screenshot and save it in the "Site web preview" folder
-                screenshot_path = os.path.join(screenshot_folder, f"{domain_name}_screenshot.png")
+                screenshot_name = f"{company_name}-capture.png"
+                screenshot_path = os.path.join(screenshot_folder, screenshot_name)
                 driver.save_screenshot(screenshot_path)
             except WebDriverException as e:
                 print(f"Error capturing screenshot for {domain_name}: {str(e)}")
@@ -106,7 +106,8 @@ driver.quit()
 # Export domain names and company names to a text file
 output_file = os.path.join(path, "Domain name.txt")
 with open(output_file, "w", encoding="utf-8") as f:
-    f.write("\n".join(results))
+    for result in results:
+        f.write(result + "\n")
 
 print("Domain names extracted successfully and saved to 'Domain name.txt'.")
 print("Website screenshots captured successfully.")
