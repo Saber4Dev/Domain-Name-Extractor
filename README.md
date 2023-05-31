@@ -35,5 +35,3 @@ License
 This script is licensed under the MIT License.
 
 Feel free to modify and adapt it to your needs.
-
-Please note that this is just a suggested README.md file. Feel free to customize it further to meet your specific requirements and preferences.
